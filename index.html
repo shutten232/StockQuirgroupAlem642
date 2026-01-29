@@ -684,7 +684,7 @@
       <div class="muted small" id="pSub">—</div>
 
       <label for="pName">Nombre</label>
-      <input id="pName" placeholder="Ej: Lavandina 5L" />
+      <input id="pName" placeholder="Ej: Válvula cilindro" />
 
       <label style="margin-top:10px">Categoría</label>
       <div class="catRow">
@@ -1525,8 +1525,9 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
   // menu actions
   el.miEdit.addEventListener("click", () => {
     if(!menuTargetId) return;
+    const id = menuTargetId;
     closeMenu();
-    openProductModal("edit", menuTargetId);
+    openProductModal("edit", id);
   });
 
   el.miDelete.addEventListener("click", () => {
