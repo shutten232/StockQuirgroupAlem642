@@ -1528,7 +1528,9 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
     if(act === "menu"){
       e.preventDefault();
       const rect = btn.getBoundingClientRect();
-      openMenuFromButton($1);
+      const pid = btn.dataset.id || (btn.closest(".item") && btn.closest(".item").dataset.id);
+      if(!pid){ showErr("No encontré el producto. Recargá la página."); return; }
+      openMenuFromButton(btn, pid);
     }
   });
 
