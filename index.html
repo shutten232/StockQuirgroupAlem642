@@ -4,6 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Stock · Simple & Operativo</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <!-- BUILD_2026-01-29_A -->
 <style>
   :root{
   --bg:#f5f6f8;
@@ -529,7 +533,7 @@
   <div class="inner">
     <div class="brand">
       <div class="t">STOCK QUIROGA GNC</div>
-      <div class="sub">Control de stock operativo</div>
+      <div class="sub">Control de stock operativo <span style="opacity:.55;font-size:12px;margin-left:6px">BUILD_2026-01-29_A</span></div>
     </div>
     <div class="pill" id="pillTotals">0 productos · 0 mov.</div>
     <div class="actions">
@@ -759,6 +763,7 @@
 
 (() => {
   "use strict";
+  console.log("BUILD_2026-01-29_A");
 const showErr = (msg) => {
   try{
     const b = document.getElementById("errBanner");
