@@ -509,6 +509,7 @@
   max-width: 320px;
   width: max-content;
   overflow: hidden;
+position: fixed;
 }
 #menu button{
   white-space: nowrap;
@@ -1299,29 +1300,38 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
   }
 
   // ===== Context menu =====
-  function openMenu(x, y, productId){
+  function openMenuFromButton(btn, productId){
     menuTargetId = productId;
 
+    // mostrar
     el.menu.style.display = "block";
-    // posicion inicial
+    el.menu.style.position = "fixed";
+
+    const pad = 8;
+    const br = btn.getBoundingClientRect();
+
+    // ubicación: debajo a la derecha del botón (viewport)
+    // primero lo colocamos y luego clamp
+    let x = br.right;
+    let y = br.bottom;
+
     el.menu.style.left = x + "px";
     el.menu.style.top = y + "px";
 
-    // Ajuste para que no se quede "arriba" ni se salga de pantalla
-    const pad = 8;
+    // medir tamaño real
     const r = el.menu.getBoundingClientRect();
 
-    let nx = x, ny = y;
-
-    if(nx + r.width > window.innerWidth - pad){
-      nx = Math.max(pad, window.innerWidth - pad - r.width);
+    // si se sale por derecha, alinearlo a la izquierda del botón
+    if(x + r.width > window.innerWidth - pad){
+      x = Math.max(pad, br.left - r.width);
     }
-    if(ny + r.height > window.innerHeight - pad){
-      ny = Math.max(pad, y - r.height - 10); // abrir hacia arriba si no entra
+    // si se sale por abajo, abrir hacia arriba
+    if(y + r.height > window.innerHeight - pad){
+      y = Math.max(pad, br.top - r.height);
     }
 
-    el.menu.style.left = nx + "px";
-    el.menu.style.top = ny + "px";
+    el.menu.style.left = x + "px";
+    el.menu.style.top = y + "px";
   }
 
   function closeMenu(){
@@ -1518,7 +1528,7 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
     if(act === "menu"){
       e.preventDefault();
       const rect = btn.getBoundingClientRect();
-      openMenu(rect.left, rect.bottom + 6, id);
+      openMenuFromButton($1);
     }
   });
 
