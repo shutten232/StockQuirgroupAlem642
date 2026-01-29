@@ -522,33 +522,6 @@
 #movesFiltersRow .row{
   flex-wrap: wrap;
 }</style>
-<script>
-(function(){
-  function ensureBanner(){
-    if(document.getElementById("errBanner")) return;
-    var b=document.createElement("div");
-    b.id="errBanner";
-    b.style.cssText="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff;border:1px solid #dc2626;border-left:6px solid #dc2626;border-radius:12px;padding:10px 12px;box-shadow:0 10px 28px rgba(0,0,0,.12);font-family:ui-sans-serif,system-ui;font-size:13px;";
-    var t=document.createElement("div"); t.textContent="Error"; t.style.cssText="font-weight:800;margin-bottom:4px;";
-    var m=document.createElement("div"); m.id="errMsg"; m.style.whiteSpace="pre-wrap";
-    b.appendChild(t); b.appendChild(m);
-    document.addEventListener("DOMContentLoaded", function(){ document.body.appendChild(b); });
-  }
-  ensureBanner();
-  window.showErr = function(msg){
-    try{
-      var b=document.getElementById("errBanner");
-      var m=document.getElementById("errMsg");
-      if(!b||!m) return;
-      m.textContent = String(msg);
-      b.style.display="block";
-    }catch(e){}
-  };
-  window.addEventListener("error", function(e){ window.showErr(e.message || e.error || "Error JS"); });
-  window.addEventListener("unhandledrejection", function(e){ window.showErr(e.reason || "Promesa rechazada"); });
-  console.log("BOOT OK");
-})();
-</script>
 </head>
 <body>
 
@@ -782,22 +755,10 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script>try{
+<script>
 
-// ===== Firebase RTDB (compat, sin módulos) =====
-// Aun así: RECOMENDADO abrir por http:// (Live Server). En file:// puede depender del navegador.
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBVO4oOfaNQhn5UYNDBrXdUJ1ZFbBkopM0",
-  authDomain: "stockquirgroup.firebaseapp.com",
-  databaseURL: "https://stockquirgroup-default-rtdb.firebaseio.com",
-  projectId: "stockquirgroup",
-  storageBucket: "stockquirgroup.firebasestorage.app",
-  messagingSenderId: "1036088515479",
-  appId: "1:1036088515479:web:b8b5875346285f52f9c2d2"
-};
-
-firebase.initializeApp(firebaseConfig);
+(() => {
+  "use strict";
 const showErr = (msg) => {
   try{
     const b = document.getElementById("errBanner");
@@ -807,29 +768,175 @@ const showErr = (msg) => {
     b.style.display = "block";
   }catch(_){}
 };
+window.addEventListener("error", (e) => showErr(e.message || e.error || "Error JS"));
+window.addEventListener("unhandledrejection", (e) => showErr(e.reason || "Promesa rechazada"));
 
-window.addEventListener("error", (e) => {
-  showErr(e.message || e.error || "Error JS");
-});
-window.addEventListener("unhandledrejection", (e) => {
-  showErr(e.reason || "Promesa rechazada");
-});
+// ===== Firebase RTDB (sin auth, reglas abiertas) =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBVO4oOfaNQhn5UYNDBrXdUJ1ZFbBkopM0",
+  authDomain: "stockquirgroup.firebaseapp.com",
+  databaseURL: "https://stockquirgroup-default-rtdb.firebaseio.com",
+  projectId: "stockquirgroup",
+  storageBucket: "stockquirgroup.firebasestorage.app",
+  messagingSenderId: "1036088515479",
+  appId: "1:1036088515479:web:b8b5875346285f52f9c2d2"
+};
+if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Raíz (namespace)
 const ROOT = "quirgroup_stock_v1";
 const rRoot = () => db.ref(ROOT);
 
 async function ensureSeedOnCloud(){
   const snap = await rRoot().once("value");
-  if(!snap.exists()){
+  if(!snap.exists() || !snap.val()){
     const seedCats = uniqueCats(["Sin categoría","Rampas","Electrónicas","Llaves","Cilindros","Cunas","Reguladores","Válvulas","Otros"]);
     const payload = { products: seedProducts(), moves: [], cats: seedCats, updatedAt: Date.now() };
     await rRoot().set(payload);
   }
 }
 
-async function load(){
+window.addEventListener("error", (ev) => {
+  const b = document.getElementById("errBanner");
+  const m = document.getElementById("errMsg");
+  if(b && m){
+    m.textContent = (ev?.message || "Error JS") + (ev?.filename ? ` (${ev.filename.split("/").pop()}:${ev.lineno})` : "");
+    b.style.display = "block";
+  }
+});
+
+
+  // ===== Storage (LOCAL DEV) =====
+  // Luego, para Firebase: reemplazar load()/save() por RTDB manteniendo el mismo shape.
+  const KEY_PRODUCTS = "qg_products_v1";
+  const KEY_MOVES    = "qg_moves_v1";
+  const KEY_CATS     = "qg_cats_v1";
+
+  // ===== DOM =====
+  const $ = (id) => document.getElementById(id);
+
+  const el = {
+    // top
+    btnAdd: $("btnAdd"),
+    btnImport: $("btnImport"),
+    btnExportStock: $("btnExportStock"),
+    btnExportMoves: $("btnExportMoves"),
+    btnReset: $("btnReset"),
+    pillTotals: $("pillTotals"),
+
+    // products
+    q: $("q"),
+    catFilter: $("catFilter"),
+    btnCats: $("btnCats"),
+    pillCount: $("pillCount"),
+    list: $("list"),
+    emptyProducts: $("emptyProducts"),
+
+    // moves
+    mq: $("mq"),
+    mTypeFilter: $("mTypeFilter"),
+    mCatFilter: $("mCatFilter"),
+    mDateFrom: $("mDateFrom"),
+    mDateTo: $("mDateTo"),
+    mClearFilters: $("mClearFilters"),
+    pillMoves: $("pillMoves"),
+    movesTbody: $("movesTbody"),
+    emptyMoves: $("emptyMoves"),
+
+    // move modal
+    backdrop: $("backdrop"),
+    mTitle: $("mTitle"),
+    mSub: $("mSub"),
+    mQty: $("mQty"),
+    mNote: $("mNote"),
+    btnCancel: $("btnCancel"),
+    btnConfirm: $("btnConfirm"),
+
+    // product modal
+    backdropProd: $("backdropProd"),
+    pTitle: $("pTitle"),
+    pSub: $("pSub"),
+    pName: $("pName"),
+    pCatSel: $("pCatSel"),
+    pCatNew: $("pCatNew"),
+    pCatUseNew: $("pCatUseNew"),
+    pStockWrap: $("pStockWrap"),
+    pStock: $("pStock"),
+    pCancel: $("pCancel"),
+    pConfirm: $("pConfirm"),
+
+    // import
+    fileImport: $("fileImport"),
+
+    // menu
+    menu: $("menu"),
+    miEdit: $("miEdit"),
+    miDelete: $("miDelete"),
+
+    // categories modal
+    backdropCats: $("backdropCats"),
+    cClose: $("cClose"),
+    cCancel: $("cCancel"),
+    cNew: $("cNew"),
+    cAdd: $("cAdd"),
+    cList: $("cList"),
+  };
+
+  // ===== State =====
+  let products = []; // {id,name,category,stock,createdAt}
+  let moves = [];    // {id,ts,productId,productName,type,qty,before,after,note}
+  let cats = [];     // ["Sin categoría", ...]
+  let selectedProductId = null;
+  let pendingMoveType = "IN"; // IN / OUT
+
+  // Context menu state
+  let menuTargetId = null;
+
+  // ===== Utils =====
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+  const esc = (s) => String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+  const clampPosInt = (v) => {
+    const n = parseInt(String(v).trim(), 10);
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  };
+
+  const fmt = (ts) => {
+    const d = new Date(ts);
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mi = String(d.getMinutes()).padStart(2,"0");
+    return `${dd}/${mm} ${hh}:${mi}`;
+  };
+
+const parseDateInput = (v) => {
+  if(!v) return null;
+  const [y,m,d] = v.split("-").map(n=>parseInt(n,10));
+  if(!y||!m||!d) return null;
+  return new Date(y, m-1, d).getTime();
+};
+const startOfDay = (ms) => { const d=new Date(ms); d.setHours(0,0,0,0); return d.getTime(); };
+const endOfDay   = (ms) => { const d=new Date(ms); d.setHours(23,59,59,999); return d.getTime(); };
+
+
+
+  function seedProducts(){
+    return [
+      { id: uid(), name:"abrazadera 16-27", category:"Sin categoría", stock:350, createdAt: Date.now() },
+      { id: uid(), name:"grampa caño alta", category:"Sin categoría", stock:60, createdAt: Date.now() },
+      { id: uid(), name:"arandela para manometro", category:"Sin categoría", stock:80, createdAt: Date.now() },
+      { id: uid(), name:"bobina landi", category:"Sin categoría", stock:3, createdAt: Date.now() },
+    ];
+  }
+
+  async function load(){
   await ensureSeedOnCloud();
 
   rRoot().on("value", (snap) => {
@@ -838,15 +945,22 @@ async function load(){
     moves = Array.isArray(v.moves) ? v.moves : [];
     cats = Array.isArray(v.cats) ? uniqueCats(v.cats) : ["Sin categoría"];
 
-    // Categorías base siempre presentes
     const BASE_CATS = ["Sin categoría","Rampas","Electrónicas","Llaves","Cilindros","Cunas","Reguladores","Válvulas","Otros"];
     for(const bc of BASE_CATS){ if(!cats.includes(bc)) cats.push(bc); }
     cats = uniqueCats(cats);
 
-    renderCatSelects();
+    products = products.map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "").trim(),
+      category: String(p.category || "Sin categoría").trim() || "Sin categoría",
+      stock: Number.isFinite(+p.stock) ? Math.max(0, parseInt(p.stock,10)) : 0,
+      createdAt: Number(p.createdAt || Date.now())
+    })).filter(p => p.name);
+
     render();
-    renderMoves();
-    renderPills();
+  }, (err) => {
+    console.error(err);
+    showErr("Firebase RTDB: " + (err && err.message ? err.message : err));
   });
 }catch{ products = seedProducts(); }
 
@@ -883,11 +997,10 @@ for(const bc of BASE_CATS){
   }
 
   function save(){
-  // write-through (simple y robusto). No hace falta await para uso normal.
   const payload = { products, moves, cats, updatedAt: Date.now() };
   rRoot().set(payload).catch((err) => {
     console.error(err);
-    alert("Error guardando en Firebase RTDB. Revisá consola.");
+    showErr("Error guardando en Firebase: " + (err && err.message ? err.message : err));
   });
 }
 
@@ -1534,22 +1647,13 @@ document.addEventListener("click", (e) => {
 });
 
 // ===== Init =====
-  load().catch((e)=>{ console.error(e); showErr("Error inicializando Firebase: " + (e && e.message ? e.message : e)); });
+  load().catch((e)=>{ console.error(e); showErr("Init Firebase: " + (e && e.message ? e.message : e)); });
   render();
 })();
 
-
-}catch(e){
-  console.error(e);
-  if(window.showErr) window.showErr('Error ejecutando la app: ' + (e && e.message ? e.message : e));
-}
 </script>
 <div id="errBanner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:#fff1f2; border:1px solid #fecdd3; color:#7f1d1d; padding:10px 12px; border-radius:12px; font: 13px/1.35 ui-sans-serif,system-ui;">
   <b>Error:</b> <span id="errMsg"></span>
-</div>
-<div id="errBanner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:#fff; border:1px solid #dc2626; border-left:6px solid #dc2626; border-radius:12px; padding:10px 12px; box-shadow:0 10px 28px rgba(0,0,0,.12); font-family:ui-sans-serif,system-ui; font-size:13px;">
-  <div style="font-weight:800; margin-bottom:4px;">Error</div>
-  <div id="errMsg" style="white-space:pre-wrap;"></div>
 </div>
 </body>
 </html>
