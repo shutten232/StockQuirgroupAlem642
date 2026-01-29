@@ -1,0 +1,1502 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stock · Simple & Operativo</title>
+<style>
+  :root{
+  --bg:#f5f6f8;
+  --panel:#ffffff;
+  --panel2:#f1f3f6;
+  --text:#1f2933;
+  --muted:#6b7280;
+  --line:#dcdfe4;
+
+  --accent:#2563eb;
+
+  --good:#16a34a;    /* Entrada */
+  --bad:#dc2626;     /* Salida */
+  --warn:#d97706;    /* Advertencia */
+
+  --radius:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.06);
+
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:var(--sans);
+    background: var(--bg);
+    color:var(--text);
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:14px 14px 28px}
+  /* Topbar (compact) */
+  .topbar{
+  position:sticky; top:0; z-index:10;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+  .topbar .inner{
+  max-width:1100px;
+  margin:0 auto;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+  .brand{display:flex;align-items:baseline;gap:10px;min-width:190px}
+  .brand .t{font-weight:800;letter-spacing:.2px}
+  .brand .sub{font-size:12px;color:var(--muted)}
+  .pill{
+    font-family:var(--mono);
+    font-size:12px;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+    border-radius:999px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  button, .btn{
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--text);
+    border-radius:12px;
+    padding:8px 10px;
+    font-weight:700;
+    font-size:13px;
+  }
+  button:hover{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
+  .btn-accent{
+    border-color:rgba(255,193,7,.35);
+    background:rgba(255,193,7,.10);
+  }
+  .btn-accent:hover{background:rgba(255,193,7,.14)}
+  .btn-ghost{background:transparent}
+  .btn-danger{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.10)}
+  .btn-danger:hover{background:rgba(251,113,133,.14)}
+  .btn-icon{
+    width:40px;height:38px;padding:0;display:grid;place-items:center;
+    font-size:18px;font-weight:900;border-radius:12px;
+  }
+
+  /* Layout */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.25fr 1.25fr;
+    gap:14px;
+    margin-top:14px;
+  }
+  @media (max-width: 980px){
+    .grid{grid-template-columns:1fr}
+    .brand{min-width:auto}
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .card .hd{
+    padding:12px 12px;
+    display:flex;align-items:center;gap:10px;
+    border-bottom:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+  }
+  .card .hd h2{margin:0;font-size:14px;letter-spacing:.2px}
+  .card .bd{padding:12px}
+  .grow{flex:1}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search{
+    flex:1;
+    min-width:220px;
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.18);
+    border-radius:12px;
+    padding:8px 10px;
+  }
+  .search input{
+    width:100%;
+    background:transparent;border:0;outline:0;color:var(--text);
+    font-size:14px;
+  }
+  .search .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .small{font-size:12px}
+  .sep{height:1px;background:var(--line);margin:10px 0}
+
+  /* Product list */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.12);
+    border-radius:14px;
+    padding:10px;
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap:10px;
+    align-items:center;
+  }
+  .item:hover{border-color:rgba(255,255,255,.22);background:rgba(0,0,0,.16)}
+  .name{font-weight:800}
+  .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .stock{
+    font-family:var(--mono);
+    font-weight:900;
+    font-size:22px;
+    padding:4px 10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    min-width:84px;
+    text-align:center;
+  }
+  .stock.good{border-color:rgba(74,222,128,.32);background:rgba(74,222,128,.09)}
+  .stock.bad{border-color:rgba(251,113,133,.32);background:rgba(251,113,133,.09)}
+  .itemActions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+  .kebab{
+    width:38px;height:38px;border-radius:12px;
+    display:grid;place-items:center;
+    font-size:18px;
+  }
+  .chip{
+    font-family:var(--mono);
+    font-size:12px;
+    padding:4px 8px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--muted);
+    background:rgba(255,255,255,.02);
+  }
+
+  /* Movements */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;color:var(--muted);text-align:left;font-weight:800}
+  td{font-size:13px}
+  .delta{
+    font-family:var(--mono);font-weight:900;
+    display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+  }
+  .delta.pos{border-color:rgba(74,222,128,.32);background:rgba(74,222,128,.09)}
+  .delta.neg{border-color:rgba(251,113,133,.32);background:rgba(251,113,133,.09)}
+  .mono{font-family:var(--mono)}
+  .nowrap{white-space:nowrap}
+  .empty{
+    padding:14px;border:1px dashed rgba(234,240,255,.22);
+    border-radius:14px;color:var(--muted);background:rgba(0,0,0,.12);
+  }
+
+
+  .select{
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:12px;
+    padding:10px 10px;
+    font-size:14px;
+    outline:0;
+    min-width:190px;
+  }
+  .tag{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.04);
+    padding:6px 10px;border-radius:999px;
+    font-size:12px;color:var(--muted);
+  }
+
+  /* Modal */
+  .backdrop{
+    position:fixed;inset:0;display:none;
+    background:rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    z-index:50;
+    padding:18px;
+  }
+  .modal{
+    max-width:520px;margin:8vh auto 0;
+    border:1px solid var(--line);
+  background:var(--panel);
+    color:var(--text);
+    border-radius:18px;
+    box-shadow:0 26px 80px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .modal .mhd{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+  .modal .mhd .title{font-weight:900}
+  .modal .mbd{padding:14px}
+  .modal label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+  .qty{
+    display:flex;gap:10px;align-items:center
+  }
+  .qty input{
+    width:100%;
+    background:var(--panel2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:14px;
+    padding:14px 14px;
+    font-size:34px;
+    font-weight:900;
+    font-family:var(--mono);
+    outline:0;
+    text-align:center;
+  }
+  .qty .hint{font-size:12px;color:var(--muted)}
+  .modal textarea{
+    width:100%;
+    min-height:72px;
+    resize:vertical;
+    background:rgba(0,0,0,.20);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:14px;
+    padding:10px 12px;
+    outline:0;
+    font-size:14px;
+  }
+  .mft{
+    padding:12px 14px;
+    border-top:1px solid var(--line);
+    display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+    background:rgba(255,255,255,.02);
+  }
+  .kbd{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+    padding:4px 8px;border-radius:10px;
+  }
+
+  /* Tiny menu */
+  .menu{
+    position:fixed;
+    display:none;
+    z-index:60;
+    min-width:190px;
+    border:1px solid var(--line);
+    background:rgba(15,22,33,.98);
+    border-radius:14px;
+    box-shadow:0 22px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .menu button{
+    width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);
+    background:transparent;border-radius:0;padding:10px 12px;font-weight:800
+  }
+  .menu button:last-child{border-bottom:0}
+  .menu button:hover{background:rgba(255,255,255,.05)}
+
+  /* QUIROGA CORPORATIVO */
+  body{ background: linear-gradient(180deg, #eef2f7 0%, var(--bg) 40%, var(--bg) 100%); }
+  .topbar{
+    background: linear-gradient(180deg, #0b2f6a 0%, #0d47a1 100%);
+    border-bottom: 1px solid rgba(255,255,255,.18);
+  }
+  .topbar .brand .t{ color:#fff; letter-spacing:.6px; }
+  .topbar .brand .sub{ color:rgba(255,255,255,.78); }
+  .pill{ background: rgba(255,255,255,.14); color:#fff; border-color: rgba(255,255,255,.18); }
+  .btn{ background: #fff; color:#0b1220; border-color: rgba(11,18,32,.14); }
+  .btn:hover{ transform: translateY(-1px); }
+  .btn-accent{ background: #ffd54f; color:#0b1220; border-color: rgba(11,18,32,.16); }
+  .btn-danger{ background:#fee2e2; color:#7f1d1d; border-color: rgba(185,28,28,.25); }
+  .card{ border: 1px solid rgba(11,18,32,.10); }
+  .table th{ color: rgba(11,18,32,.70); }
+  .kbd{ background: rgba(11,18,32,.06); border-color: rgba(11,18,32,.14); color: rgba(11,18,32,.80); }
+
+
+  .catRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .catRow select{flex:1 1 220px;min-width:220px}
+  .catRow input{flex:2 1 220px;min-width:220px}
+  .catRow .btn{padding:10px 12px;flex:0 0 auto}
+
+/* ===== Header hierarchy ===== */
+.brand .t{
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.brand .s{
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+/* Buttons: real system feel */
+.btn, .btn-accent{
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 700;
+  font-size: .92rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+}
+.btn:hover{ background: #f8f9fb; }
+.btn:active{ transform: translateY(0); }
+
+.btn-accent{
+  background: var(--accent);
+  border-color: rgba(37,99,235,.35);
+  color: #fff;
+}
+.btn-accent:hover{ filter: brightness(.97); }
+
+.actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.actionsGroup{ position:relative; }
+
+.menu{
+  position:absolute;
+  right:0;
+  top: calc(100% + 8px);
+  min-width: 240px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.10);
+  padding: 6px;
+  display:none;
+}
+.menu.open{ display:block; }
+.menuItem{
+  width:100%;
+  text-align:left;
+  border: 0;
+  background: transparent;
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-weight: 650;
+  font-size: .92rem;
+  color: var(--text);
+  cursor:pointer;
+}
+.menuItem:hover{ background: #f5f6f8; }
+.menuItem.danger{ color: var(--bad); }
+.menuSep{ height:1px; background: var(--line); margin: 6px 6px; }
+
+/* ===== Cards / surfaces ===== */
+.card{
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Remove decorative hints */
+#chipHint{ display:none !important; }
+
+/* ===== Product item (ficha operativa) ===== */
+.item{
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.item:hover{ background:#fafbfc; }
+.item .nm{ font-weight: 750; }
+.item .meta{ color: var(--muted); font-size: .82rem; }
+.item .tag{ background: #eef1f6; border: 1px solid #e3e7ee; color: #334155; }
+.item .stk .val{ font-size: 1.5rem; font-weight: 800; letter-spacing: .2px; }
+
+/* Estado de stock: barra lateral, sin fondos chillones */
+.item{ position:relative; }
+.item::before{
+  content:"";
+  position:absolute; left:0; top:0; bottom:0; width:4px;
+  background: #cbd5e1;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+.item.ok::before{ background: var(--good); }
+.item.warn::before{ background: var(--warn); }
+.item.danger::before{ background: var(--bad); }
+
+/* Botones compactos: Salida primero, Entrada después */
+.btn.mini{
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: .88rem;
+  font-weight: 700;
+}
+.btn.mini.out{
+  border-color: rgba(220,38,38,.25);
+  color: var(--bad);
+  background: #fff;
+}
+.btn.mini.out:hover{ background: rgba(220,38,38,.06); }
+
+.btn.mini.in{
+  border-color: rgba(22,163,74,.25);
+  color: var(--good);
+  background: #fff;
+}
+.btn.mini.in:hover{ background: rgba(22,163,74,.06); }
+
+.btn.mini.ghost{ color: var(--muted); }
+
+/* ===== Movimientos: look de log ===== */
+.table{
+  font-size: .86rem;
+}
+.table td, .table th{ padding: 8px 10px; }
+.pill.ok{ color: var(--good); background: transparent; border: 1px solid rgba(22,163,74,.22); }
+.pill.bad{ color: var(--bad); background: transparent; border: 1px solid rgba(220,38,38,.22); }
+.nowrap{ white-space: nowrap; }
+
+.obsCol{ max-width: 260px; }
+
+
+/* ===== Layout operativo ===== */
+/* Más ancho el panel de movimientos/detalles */
+.cols{ grid-template-columns: 1.2fr 1.3fr !important; gap:12px !important; }
+
+/* Tarjetas de producto más compactas */
+.list{ gap:8px !important; }
+.item{
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+}
+.item .meta{ font-size: .80rem !important; }
+.item .stk .val{ font-size: 1.4rem !important; }
+.btn.mini{ padding: 7px 10px !important; }
+
+
+/* Filtros movimientos */
+.select{
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background:#fff;
+  color: var(--text);
+  font-weight: 650;
+  font-size: .92rem;
+}
+.dateWrap{ display:flex; align-items:center; gap:8px; }
+.dateWrap input[type="date"]{
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background:#fff;
+  color: var(--text);
+  font-size: .92rem;
+}
+
+
+/* ===== Ajuste layout: más espacio para Detalles (movimientos) ===== */
+.cols{ grid-template-columns: 1.05fr 1.35fr !important; }
+
+/* ===== Menú de acciones del producto (⋯) sin estirar la pantalla ===== */
+#menu{
+  max-width: 320px;
+  width: max-content;
+  overflow: hidden;
+}
+#menu button{
+  white-space: nowrap;
+}
+
+/* Filtros de movimientos: no romper layout */
+#movesFiltersRow{
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#movesFiltersRow .row{
+  flex-wrap: wrap;
+}</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand">
+      <div class="t">STOCK QUIROGA GNC</div>
+      <div class="sub">Control de stock operativo</div>
+    </div>
+    <div class="pill" id="pillTotals">0 productos · 0 mov.</div>
+    <div class="actions">
+      <button class="btn-accent" id="btnAdd" type="button">+ Producto</button>
+
+<div class="actionsGroup">
+  <button class="btn" id="btnActions" type="button" aria-haspopup="true" aria-expanded="false" title="Acciones">Acciones ▾</button>
+  <div class="menu" id="actionsMenu" role="menu" aria-label="Acciones">
+    <button id="btnImport" class="menuItem" type="button" role="menuitem">Importar CSV</button>
+    <button id="btnExportStock" class="menuItem" type="button" role="menuitem">Exportar stock CSV</button>
+    <button id="btnExportMoves" class="menuItem" type="button" role="menuitem">Exportar movimientos CSV</button>
+    <div class="menuSep" role="separator"></div>
+    <button id="btnReset" class="menuItem danger" type="button" role="menuitem">Reset (borrar todo)</button>
+  </div>
+</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- Productos -->
+    <section class="card">
+      <div class="hd">
+        <h2>Productos</h2>
+        <div class="grow"></div>
+        <div class="chip" id="chipHint">Enter confirma · Esc cierra</div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="search">
+            <span class="k">🔎</span>
+            <input id="q" placeholder="Buscar producto..." autocomplete="off" />
+            <span class="k">Ctrl+K</span>
+          </div>
+          <select id="catFilter" class="select" title="Filtrar por categoría"></select>
+          <button id="btnCats" class="btn ghost" type="button" title="Crear/editar categorías">Categorías</button>
+          <span class="pill" id="pillCount">0</span>
+        </div>
+
+        <div class="sep"></div>
+
+        <div id="list" class="list"></div>
+        <div id="emptyProducts" class="empty" style="display:none">
+          No hay productos. Tocá <b>+ Producto</b>.
+        </div>
+      </div>
+    </section>
+
+    <!-- Movimientos -->
+    <aside class="card">
+      <div class="hd">
+        <h2>Últimos movimientos</h2>
+        <div class="grow"></div>
+        <span class="pill" id="pillMoves">0</span>
+      </div>
+      <div class="bd" style="padding:0">
+        <div style="padding:12px 12px 0" class="row">
+          <div class="search" style="flex:1;min-width:0">
+            <span class="k">⌕</span>
+            <input id="mq" placeholder="Filtrar movimientos..." autocomplete="off" />
+          </div>
+        </div>
+<div style="padding:8px 12px 0" class="row" id="movesFiltersRow">
+  <select id="mTypeFilter" class="select" style="width:150px">
+    <option value="ALL">Todo</option>
+    <option value="OUT">Salidas</option>
+    <option value="IN">Ingresos</option>
+  </select>
+
+  <select id="mCatFilter" class="select" style="width:190px">
+    <option value="ALL">Todas las categorías</option>
+  </select>
+
+  <div class="row" style="gap:8px; flex-wrap:wrap">
+    <div class="dateWrap">
+      <span class="muted small">Desde</span>
+      <input type="date" id="mDateFrom" />
+    </div>
+    <div class="dateWrap">
+      <span class="muted small">Hasta</span>
+      <input type="date" id="mDateTo" />
+    </div>
+    <button class="btn" id="mClearFilters" type="button">Limpiar</button>
+  </div>
+</div>
+        <div style="padding:8px 12px 12px" class="row small muted">
+          Se guarda: fecha/hora · tipo · cantidad · antes→después · nota
+        </div>
+
+        <div style="overflow:auto;max-height:72vh">
+          <table>
+            <thead>
+              <tr>
+                <th class="nowrap">Fecha</th>
+                <th>Producto</th>
+                <th class="nowrap">Δ</th>
+                <th class="nowrap">Antes→Después</th><th>Obs.</th>
+              </tr>
+            </thead>
+            <tbody id="movesTbody"></tbody>
+          </table>
+          <div id="emptyMoves" class="empty" style="margin:12px;display:none">
+            Sin movimientos todavía.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Adjust Modal -->
+<div class="backdrop" id="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="mhd">
+      <div class="title" id="mTitle">Movimiento</div>
+      <div class="grow"></div>
+      <span class="kbd">ESC</span>
+    </div>
+    <div class="mbd">
+      <div class="muted small" id="mSub">—</div>
+
+      <label for="mQty">Cantidad</label>
+      <div class="qty">
+        <input id="mQty" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
+      </div>
+      <div class="row small muted" style="margin-top:8px">
+        <span class="kbd">ENTER</span> Confirmar
+        <span class="kbd">ESC</span> Cancelar
+      </div>
+
+      <label for="mNote">Observación</label>
+      <textarea id="mNote" placeholder="Ej: compra, devolución, merma, ajuste, traslado..."></textarea>
+    </div>
+    <div class="mft">
+      <button class="btn-ghost" id="btnCancel">Cancelar</button>
+      <button class="btn-accent" id="btnConfirm">Confirmar</button>
+    </div>
+  
+</div>
+</div>
+
+<!-- Producto: Alta / Edición -->
+<div class="backdrop" id="backdropProd" aria-hidden="true" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+    <div class="mhd">
+      <div class="title" id="pTitle">Producto</div>
+      <div class="grow"></div>
+      <span class="kbd">ESC</span>
+    </div>
+    <div class="mbd">
+      <div class="muted small" id="pSub">—</div>
+
+      <label for="pName">Nombre</label>
+      <input id="pName" placeholder="Ej: Lavandina 5L" />
+
+      <label style="margin-top:10px">Categoría</label>
+      <div class="catRow">
+        <select id="pCatSel" aria-label="Categoría"></select>
+        <input id="pCatNew" placeholder="Nueva categoría (opcional)" />
+        <button id="pCatUseNew" type="button" class="btn">Usar</button>
+      </div>
+      <div class="muted small" style="margin-top:6px">Tip: escribí una nueva categoría y tocá “Usar” para crearla.</div>
+
+      <div id="pStockWrap" style="margin-top:10px">
+        <label for="pStock">Stock inicial</label>
+        <input id="pStock" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
+      </div>
+
+      <div class="muted small" style="margin-top:10px">Enter confirma · Esc cierra</div>
+    </div>
+    <div class="mft">
+      <button class="btn-ghost" id="pCancel">Cancelar</button>
+      <button class="btn-accent" id="pConfirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit product (simple prompt modal) -->
+
+<input type="file" id="fileImport" accept=".csv,text/csv" style="display:none" />
+
+<!-- Context menu -->
+<div class="menu" id="menu">
+  <button id="miEdit">Editar</button>
+  <button id="miDelete" class="btn-danger">Eliminar producto</button>
+</div>
+
+
+  <!-- MODAL: Categorías -->
+  <div class="backdrop" id="backdropCats" aria-hidden="true" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cTitle">
+      <div class="mhd">
+        <div>
+          <div class="mtitle" id="cTitle">Categorías</div>
+          <div class="muted small">Creá, renombrá o eliminá categorías. “Sin categoría” siempre existe.</div>
+        </div>
+        <button class="x" id="cClose" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="mbd">
+        <div class="row" style="gap:10px; align-items:flex-end">
+          <div style="flex:1">
+            <label for="cNew">Nueva categoría</label>
+            <input id="cNew" placeholder="Ej: Limpieza" autocomplete="off" />
+          </div>
+          <button class="btn" id="cAdd" type="button">Agregar</button>
+        </div>
+
+        <div class="sep" style="margin:14px 0"></div>
+
+        <div class="muted small" style="margin-bottom:8px">Tus categorías</div>
+        <div id="cList" class="list" style="max-height:46vh; overflow:auto"></div>
+      </div>
+
+      <div class="mft">
+        <button class="btn ghost" id="cCancel" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script>
+// ===== Firebase RTDB (compat, sin módulos) =====
+// Aun así: RECOMENDADO abrir por http:// (Live Server). En file:// puede depender del navegador.
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBVO4oOfaNQhn5UYNDBrXdUJ1ZFbBkopM0",
+  authDomain: "stockquirgroup.firebaseapp.com",
+  databaseURL: "https://stockquirgroup-default-rtdb.firebaseio.com",
+  projectId: "stockquirgroup",
+  storageBucket: "stockquirgroup.firebasestorage.app",
+  messagingSenderId: "1036088515479",
+  appId: "1:1036088515479:web:b8b5875346285f52f9c2d2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Raíz (namespace)
+const ROOT = "quirgroup_stock_v1";
+const rRoot = () => db.ref(ROOT);
+
+async function ensureSeedOnCloud(){
+  const snap = await rRoot().once("value");
+  if(!snap.exists()){
+    const seedCats = uniqueCats(["Sin categoría","Rampas","Electrónicas","Llaves","Cilindros","Cunas","Reguladores","Válvulas","Otros"]);
+    const payload = { products: seedProducts(), moves: [], cats: seedCats, updatedAt: Date.now() };
+    await rRoot().set(payload);
+  }
+}
+
+async function load(){
+  await ensureSeedOnCloud();
+
+  rRoot().on("value", (snap) => {
+    const v = snap.val() || {};
+    products = Array.isArray(v.products) ? v.products : [];
+    moves = Array.isArray(v.moves) ? v.moves : [];
+    cats = Array.isArray(v.cats) ? uniqueCats(v.cats) : ["Sin categoría"];
+
+    // Categorías base siempre presentes
+    const BASE_CATS = ["Sin categoría","Rampas","Electrónicas","Llaves","Cilindros","Cunas","Reguladores","Válvulas","Otros"];
+    for(const bc of BASE_CATS){ if(!cats.includes(bc)) cats.push(bc); }
+    cats = uniqueCats(cats);
+
+    renderCatSelects();
+    render();
+    renderMoves();
+    renderPills();
+  });
+}catch{ products = seedProducts(); }
+
+    try{
+      const m = JSON.parse(localStorage.getItem(KEY_MOVES) || "null");
+      moves = Array.isArray(m) ? m : [];
+    }catch{ moves = []; }
+
+    try{
+      const c = JSON.parse(localStorage.getItem(KEY_CATS) || "null");
+      cats = Array.isArray(c) ? c.map(x=>String(x).trim()).filter(Boolean) : ["Sin categoría"];
+    }catch{ cats = ["Sin categoría"]; }
+
+    if(!cats.includes("Sin categoría")) cats.unshift("Sin categoría");
+    
+// Categorías base (para arrancar sin fricción)
+const BASE_CATS = ["Sin categoría","Rampas","Electrónicas","Llaves","Cilindros","Cunas","Reguladores","Válvulas","Otros"];
+for(const bc of BASE_CATS){
+  if(!cats.includes(bc)) cats.push(bc);
+}
+
+    cats = uniqueCats(cats);
+
+    // normalize
+    products = products.map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "").trim(),
+      category: String(p.category || "Sin categoría").trim() || "Sin categoría",
+      stock: Number.isFinite(+p.stock) ? Math.max(0, parseInt(p.stock,10)) : 0,
+      createdAt: Number(p.createdAt || Date.now())
+    })).filter(p => p.name);
+
+    save();
+  }
+
+  function save(){
+  // write-through (simple y robusto). No hace falta await para uso normal.
+  const payload = { products, moves, cats, updatedAt: Date.now() };
+  rRoot().set(payload).catch((err) => {
+    console.error(err);
+    alert("Error guardando en Firebase RTDB. Revisá consola.");
+  });
+}
+
+  function uniqueCats(arr){
+    const out=[];
+    const seen=new Set();
+    for(const x of arr){
+      const v=String(x).trim();
+      if(!v) continue;
+      const k=v.toLowerCase();
+      if(seen.has(k)) continue;
+      seen.add(k);
+      out.push(v);
+    }
+    // "Sin categoría" first
+    out.sort((a,b)=>{
+      if(a==="Sin categoría") return -1;
+      if(b==="Sin categoría") return 1;
+      return a.localeCompare(b,"es");
+    });
+    return out;
+  }
+
+  // ===== Render =====
+  function render(){
+    renderCatSelects();
+    renderProducts();
+    renderMoves();
+    renderStats();
+  }
+
+  function renderStats(){
+    const prodCount = products.length;
+    const moveCount = moves.length;
+    el.pillTotals.textContent = `${prodCount} productos · ${moveCount} mov.`;
+    el.pillMoves.textContent = String(moveCount);
+  }
+
+  function renderCatSelects(){
+    const currentFilter = el.catFilter.value || "ALL";
+    const catOptions = [`<option value="ALL">Todas</option>`]
+      .concat(cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`));
+
+    el.catFilter.innerHTML = catOptions.join("");
+    // restore if possible
+    if(currentFilter && [...el.catFilter.options].some(o => o.value === currentFilter)){
+      el.catFilter.value = currentFilter;
+    } else {
+      el.catFilter.value = "ALL";
+    }
+
+    // product modal select
+    el.pCatSel.innerHTML = cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+    if(el.mCatFilter){
+      const cur = el.mCatFilter.value || "ALL";
+      el.mCatFilter.innerHTML = [`<option value="ALL">Todas las categorías</option>`].concat(cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`)).join("");
+      if([...el.mCatFilter.options].some(o=>o.value===cur)) el.mCatFilter.value = cur; else el.mCatFilter.value="ALL";
+    }
+  }
+
+  function filteredProducts(){
+    const q = el.q.value.trim().toLowerCase();
+    const cat = el.catFilter.value;
+    return products.filter(p => {
+      const okQ = !q || p.name.toLowerCase().includes(q);
+      const okC = (cat === "ALL") || (p.category === cat);
+      return okQ && okC;
+    }).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  }
+
+  function rowClass(stock){
+    if(stock === 0) return "danger";
+    if(stock <= 1) return "warn";
+    return "ok";
+  }
+
+  function renderProducts(){
+    const data = filteredProducts();
+    el.pillCount.textContent = String(data.length);
+
+    el.list.innerHTML = data.map(p => {
+      const stock = Number(p.stock)||0;
+      const cls = rowClass(stock);
+      return `
+        <div class="item ${cls}" data-id="${esc(p.id)}">
+          <div class="left">
+            <div class="nm">${esc(p.name)}</div>
+            <div class="meta">
+              <span class="tag">${esc(p.category || "Sin categoría")}</span>
+              <span class="small muted">ID: ${esc(p.id)}</span>
+            </div>
+          </div>
+
+          <div class="right">
+            <div class="stk">
+              <div class="lab muted">Stock</div>
+              <div class="val">${stock}</div>
+            </div>
+
+            <div class="btns">
+              <button class="btn mini out" data-act="out" data-id="${esc(p.id)}">− Salida</button>
+              <button class="btn mini in" data-act="in" data-id="${esc(p.id)}">+ Entrada</button>
+              <button class="btn mini ghost more" data-act="menu" data-id="${esc(p.id)}">⋯</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    el.emptyProducts.style.display = data.length ? "none" : "block";
+  }
+
+  function renderMoves(){
+    const q = el.mq.value.trim().toLowerCase();
+
+const type = el.mTypeFilter ? el.mTypeFilter.value : "ALL";
+const cat = el.mCatFilter ? el.mCatFilter.value : "ALL";
+const dFrom = el.mDateFrom ? parseDateInput(el.mDateFrom.value) : null;
+const dTo   = el.mDateTo   ? parseDateInput(el.mDateTo.value)   : null;
+const fromTs = dFrom !== null ? startOfDay(dFrom) : null;
+const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
+    const data = moves
+      .slice()
+      .sort((a,b)=>b.ts-a.ts)
+      .filter(m => {
+        const okQ = !q || m.productName.toLowerCase().includes(q) || (m.note||"").toLowerCase().includes(q);
+        const okT = (type === "ALL") || (m.type === type);
+        const p = products.find(p=>p.id===m.productId);
+        const mCat = (p ? (p.category || "Sin categoría") : "Sin categoría");
+        const okC = (cat === "ALL") || (mCat === cat);
+        const okFrom = (fromTs === null) || (m.ts >= fromTs);
+        const okTo   = (toTs   === null) || (m.ts <= toTs);
+        return okQ && okT && okC && okFrom && okTo;
+      })
+      .slice(0, 200);
+
+    el.movesTbody.innerHTML = data.map(m => {
+      const delta = m.type === "IN" ? `+${m.qty}` : `-${m.qty}`;
+      const badge = m.type === "IN" ? "ok" : "bad";
+      return `
+        <tr>
+          <td class="nowrap">${fmt(m.ts)}</td>
+          <td>${esc(m.productName)}</td>
+          <td class="nowrap"><span class="pill ${badge}">${delta}</span></td>
+          <td class="nowrap">${m.before}→${m.after}</td>
+          <td class="muted obsCol">${esc(m.note||"")}</td>
+        </tr>
+      `;
+    }).join("");
+
+    el.emptyMoves.style.display = moves.length ? "none" : "block";
+  }
+
+  // ===== Modals =====
+  function openMoveModal(productId, type){
+    const p = products.find(x => x.id === productId);
+    if(!p) return;
+    selectedProductId = productId;
+    pendingMoveType = type;
+
+    el.mTitle.textContent = type === "IN" ? "Entrada" : "Salida";
+    el.mSub.textContent = `${p.name} · Stock actual: ${p.stock} · Observación obligatoria`;
+    el.mQty.value = "";
+    el.mNote.value = "";
+    el.backdrop.style.display = "flex";
+    el.backdrop.setAttribute("aria-hidden","false");
+    setTimeout(()=>el.mQty.focus(), 50);
+  }
+
+  function closeMoveModal(){
+    el.backdrop.style.display = "none";
+    el.backdrop.setAttribute("aria-hidden","true");
+    selectedProductId = null;
+  }
+
+  function openProductModal(mode, productId=null){
+    // mode: "new" | "edit"
+    const isEdit = mode === "edit";
+    el.backdropProd.style.display = "flex";
+    el.backdropProd.setAttribute("aria-hidden","false");
+
+    el.pTitle.textContent = isEdit ? "Editar producto" : "Nuevo producto";
+    el.pSub.textContent = isEdit ? "Editá nombre/categoría." : "Cargá nombre, categoría y stock inicial.";
+
+    if(isEdit){
+      const p = products.find(x => x.id === productId);
+      if(!p) return;
+      selectedProductId = productId;
+      el.pName.value = p.name;
+      el.pCatSel.value = p.category || "Sin categoría";
+      el.pCatNew.value = "";
+      el.pStockWrap.style.display = "none";
+      el.pStock.value = String(p.stock ?? 0);
+    } else {
+      selectedProductId = null;
+      el.pName.value = "";
+      el.pCatSel.value = "Sin categoría";
+      el.pCatNew.value = "";
+      el.pStockWrap.style.display = "block";
+      el.pStock.value = "0";
+    }
+
+    setTimeout(()=>el.pName.focus(), 50);
+  }
+
+  function closeProductModal(){
+    el.backdropProd.style.display = "none";
+    el.backdropProd.setAttribute("aria-hidden","true");
+    selectedProductId = null;
+  }
+
+  function openCatsModal(){
+    el.backdropCats.style.display = "flex";
+    el.backdropCats.setAttribute("aria-hidden","false");
+    el.cNew.value = "";
+    renderCatsList();
+    setTimeout(()=>el.cNew.focus(), 50);
+  }
+
+  function closeCatsModal(){
+    el.backdropCats.style.display = "none";
+    el.backdropCats.setAttribute("aria-hidden","true");
+  }
+
+  // ===== Categories =====
+  function renderCatsList(){
+    const safe = uniqueCats(cats);
+    cats = safe;
+    save();
+    renderCatSelects();
+
+    const rows = safe.map(cat => {
+      const locked = cat === "Sin categoría";
+      return `
+        <div class="item" data-cat="${esc(cat)}" style="align-items:center">
+          <div class="left">
+            <div class="nm">${esc(cat)}</div>
+            <div class="meta"><span class="small muted">${locked ? "Fija" : "Editable"}</span></div>
+          </div>
+          <div class="right" style="gap:8px;align-items:center">
+            ${locked ? "" : `<input class="miniInput" data-act="rename" placeholder="Nuevo nombre" />`}
+            ${locked ? "" : `<button class="btn mini" data-act="doRename">Renombrar</button>`}
+            ${locked ? "" : `<button class="btn mini danger" data-act="delCat">Eliminar</button>`}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    el.cList.innerHTML = rows || `<div class="empty">Sin categorías</div>`;
+  }
+
+  function addCategory(name){
+    const n = String(name||"").trim();
+    if(!n) return;
+    cats = uniqueCats(cats.concat([n]));
+    save();
+    renderCatsList();
+  }
+
+  function renameCategory(oldName, newName){
+    const o = String(oldName||"").trim();
+    const n = String(newName||"").trim();
+    if(!o || !n) return;
+    if(o === "Sin categoría") return;
+    // update cats list
+    cats = cats.map(c => c === o ? n : c);
+    cats = uniqueCats(cats);
+
+    // update products using that category
+    products = products.map(p => p.category === o ? ({...p, category:n}) : p);
+
+    save();
+    render();
+    renderCatsList();
+  }
+
+  function deleteCategory(name){
+    const n = String(name||"").trim();
+    if(!n || n === "Sin categoría") return;
+    if(!confirm(`Eliminar categoría "${n}"? Productos pasan a "Sin categoría".`)) return;
+    cats = cats.filter(c => c !== n);
+    if(!cats.includes("Sin categoría")) cats.unshift("Sin categoría");
+    cats = uniqueCats(cats);
+    products = products.map(p => p.category === n ? ({...p, category:"Sin categoría"}) : p);
+    save();
+    render();
+    renderCatsList();
+  }
+
+  // ===== Context menu =====
+  function openMenu(x, y, productId){
+    menuTargetId = productId;
+    el.menu.style.display = "block";
+    el.menu.style.left = x + "px";
+    el.menu.style.top = y + "px";
+  }
+
+  function closeMenu(){
+    el.menu.style.display = "none";
+    menuTargetId = null;
+  }
+
+  // ===== Moves =====
+  function confirmMove(){
+    if(!selectedProductId) return;
+
+    const qty = clampPosInt(el.mQty.value);
+    if(!Number.isFinite(qty) || qty <= 0){
+      alert("Cantidad inválida.");
+      el.mQty.focus();
+      return;
+    }
+
+    const note = String(el.mNote.value||"").trim();
+
+    // Observación obligatoria para SALIDA (evita movimientos sin motivo)
+    if(pendingMoveType === "OUT" && !note){
+      alert("Falta observación en la SALIDA.");
+      el.mNote.focus();
+      return;
+    }
+    if(!note){ alert("Observación obligatoria."); el.mNote.focus(); return; }
+    const idx = products.findIndex(p => p.id === selectedProductId);
+    if(idx === -1) return;
+
+    const before = Number(products[idx].stock)||0;
+    const after = pendingMoveType === "IN"
+      ? (before + qty)
+      : Math.max(0, before - qty);
+
+    products[idx] = { ...products[idx], stock: after };
+
+    moves.push({
+      id: uid(),
+      ts: Date.now(),
+      productId: selectedProductId,
+      productName: products[idx].name,
+      type: pendingMoveType,
+      qty,
+      before,
+      after,
+      note
+    });
+
+    if(moves.length > 8000) moves = moves.slice(moves.length - 8000);
+
+    save();
+    closeMoveModal();
+    render();
+  }
+
+  // ===== CSV =====
+  function splitLine(line){
+    const res=[]; let cur="", inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch === '"'){
+        if(inQ && line[i+1] === '"'){ cur+='"'; i++; }
+        else inQ=!inQ;
+      } else if((ch === ";" || ch === ",") && !inQ){
+        res.push(cur); cur="";
+      } else cur += ch;
+    }
+    res.push(cur);
+    return res;
+  }
+
+  function parseCSV(text){
+    const src = text.replace(/^\uFEFF/,"");
+    const lines = src.split(/\r?\n/).filter(l=>l.trim().length);
+    if(lines.length < 2) return [];
+    const header = splitLine(lines[0]).map(h=>String(h||"").trim().toLowerCase());
+    const idxAny=(names)=>{ for(const n of names){ const i=header.indexOf(n); if(i!==-1) return i; } return -1; };
+    const iNombre = idxAny(["nombre","articulo","artículo","producto","name"]);
+    const iCant = idxAny(["cantidad","stock","stock_actual","existencia","qty"]);
+    if(iNombre === -1 || iCant === -1) return [];
+
+    const out=[];
+    for(let r=1;r<lines.length;r++){
+      const cols = splitLine(lines[r]);
+      const name = String(cols[iNombre]??"").trim();
+      const qty = parseInt(String(cols[iCant]??"0").trim(),10);
+      if(!name) continue;
+      out.push({ name, stock: Number.isFinite(qty)&&qty>=0?qty:0 });
+    }
+    return out;
+  }
+
+  function csvEscape(v){
+    const s = String(v ?? "");
+    const needs = /[",\n\r;]/.test(s);
+    const out = s.replaceAll('"','""');
+    return needs ? `"${out}"` : out;
+  }
+
+  function exportStockCSV(){
+    const lines = ["nombre;cantidad"];
+    for(const p of products){
+      lines.push(`${csvEscape(p.name)};${Number(p.stock)||0}`);
+    }
+    downloadText("\uFEFF" + lines.join("\n"), "stock_nombre_cantidad.csv", "text/csv;charset=utf-8");
+  }
+
+  function exportMovesCSV(){
+    const lines = ["fecha;producto;tipo;cantidad;antes;despues;nota"];
+    const sorted = moves.slice().sort((a,b)=>b.ts-a.ts);
+    for(const m of sorted){
+      const tipo = m.type;
+      const cant = m.qty;
+      lines.push(`${csvEscape(fmt(m.ts))};${csvEscape(m.productName)};${tipo};${cant};${m.before};${m.after};${csvEscape(m.note||"")}`);
+    }
+    downloadText("\uFEFF" + lines.join("\n"), "movimientos_stock.csv", "text/csv;charset=utf-8");
+  }
+
+  function downloadText(text, filename, mime){
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ===== Events =====
+  el.btnAdd.addEventListener("click", () => openProductModal("new"));
+
+  el.btnImport.addEventListener("click", () => el.fileImport.click());
+
+  el.fileImport.addEventListener("change", async () => {
+    const f = el.fileImport.files && el.fileImport.files[0];
+    if(!f) return;
+    const text = await f.text();
+    const rows = parseCSV(text);
+    el.fileImport.value = "";
+    if(!rows.length){
+      alert("CSV inválido. Encabezados: nombre y cantidad.");
+      return;
+    }
+    if(!confirm(`Importar ${rows.length} productos y reemplazar stock?`)) return;
+
+    products = rows.map(r => ({ id: uid(), name: r.name, category:"Sin categoría", stock:r.stock, createdAt: Date.now() }));
+    moves = [];
+    save();
+    render();
+  });
+
+  el.btnExportStock.addEventListener("click", exportStockCSV);
+  el.btnExportMoves.addEventListener("click", exportMovesCSV);
+
+  el.btnReset.addEventListener("click", () => {
+    if(!confirm("RESET TOTAL: borra TODO (stock, movimientos y categorías). ¿Seguro?")) return;
+    products = seedProducts();
+    moves = [];
+    cats = ["Sin categoría"];
+    save();
+    render();
+  });
+
+  el.q.addEventListener("input", renderProducts);
+  el.catFilter.addEventListener("change", renderProducts);
+  el.mq.addEventListener("input", renderMoves);
+  if(el.mTypeFilter) el.mTypeFilter.addEventListener("change", renderMoves);
+  if(el.mCatFilter) el.mCatFilter.addEventListener("change", renderMoves);
+  if(el.mDateFrom) el.mDateFrom.addEventListener("change", renderMoves);
+  if(el.mDateTo) el.mDateTo.addEventListener("change", renderMoves);
+  if(el.mClearFilters) el.mClearFilters.addEventListener("click", () => {
+    if(el.mTypeFilter) el.mTypeFilter.value="ALL";
+    if(el.mCatFilter) el.mCatFilter.value="ALL";
+    if(el.mDateFrom) el.mDateFrom.value="";
+    if(el.mDateTo) el.mDateTo.value="";
+    el.mq.value="";
+    renderMoves();
+  });
+
+  // product list actions
+  el.list.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    const item = e.target.closest(".item[data-id]");
+    if(!btn && !item) return;
+
+    const id = (btn || item).getAttribute("data-id");
+    const act = btn ? btn.getAttribute("data-act") : "out"; // click en tarjeta = SALIDA por defecto
+
+    if(act === "in") openMoveModal(id, "IN");
+    if(act === "out") openMoveModal(id, "OUT");
+    if(act === "menu"){
+      e.preventDefault();
+      const rect = btn.getBoundingClientRect();
+      openMenu(rect.left, rect.bottom + 6, id);
+    }
+  });
+
+  // menu actions
+  el.miEdit.addEventListener("click", () => {
+    if(!menuTargetId) return;
+    closeMenu();
+    openProductModal("edit", menuTargetId);
+  });
+
+  el.miDelete.addEventListener("click", () => {
+    if(!menuTargetId) return;
+    const id = menuTargetId;
+    closeMenu();
+    const p = products.find(x => x.id === id);
+    if(!p) return;
+    if(!confirm(`Eliminar "${p.name}"?`)) return;
+    products = products.filter(x => x.id !== id);
+    // moves stay (auditoría). Si querés limpiar, lo hacemos después.
+    save();
+    render();
+  });
+
+  document.addEventListener("click", (e) => {
+    if(el.menu.style.display !== "block") return;
+    if(e.target.closest("#menu")) return;
+    if(e.target.closest("button[data-act='menu']")) return;
+    closeMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      closeMenu();
+      closeMoveModal();
+      closeProductModal();
+      closeCatsModal();
+    }
+    if(e.ctrlKey && (e.key === "k" || e.key === "K")){
+      e.preventDefault();
+      el.q.focus();
+    }
+    if(e.key === "Enter"){
+      // Move modal
+      if(el.backdrop.style.display === "flex" && document.activeElement === el.mQty){
+        e.preventDefault();
+        confirmMove();
+      }
+      // Product modal
+      if(el.backdropProd.style.display === "flex" && (document.activeElement === el.pName || document.activeElement === el.pStock)){
+        e.preventDefault();
+        confirmProduct();
+      }
+    }
+  });
+
+  // move modal buttons
+  el.btnCancel.addEventListener("click", closeMoveModal);
+  el.btnConfirm.addEventListener("click", confirmMove);
+
+  // product modal buttons
+  el.pCancel.addEventListener("click", closeProductModal);
+  el.pCatUseNew.addEventListener("click", () => {
+    const n = el.pCatNew.value.trim();
+    if(!n) return;
+    addCategory(n);
+    el.pCatSel.value = cats.find(c => c.toLowerCase() === n.toLowerCase()) || n;
+    el.pCatNew.value = "";
+  });
+
+  function confirmProduct(){
+    const name = el.pName.value.trim();
+    if(!name){
+      alert("Nombre vacío.");
+      el.pName.focus();
+      return;
+    }
+    const cat = (el.pCatSel.value || "Sin categoría").trim() || "Sin categoría";
+    if(!cats.includes(cat)){
+      cats = uniqueCats(cats.concat([cat]));
+    }
+
+    if(el.pStockWrap.style.display !== "none"){
+      // NEW
+      const stock = clampPosInt(el.pStock.value);
+      if(!Number.isFinite(stock)){
+        alert("Stock inválido.");
+        el.pStock.focus();
+        return;
+      }
+      products.unshift({ id: uid(), name, category: cat, stock, createdAt: Date.now() });
+    } else {
+      // EDIT
+      if(!selectedProductId) return;
+      products = products.map(p => p.id === selectedProductId ? ({...p, name, category: cat}) : p);
+    }
+
+    cats = uniqueCats(cats);
+    save();
+    closeProductModal();
+    render();
+  }
+
+  el.pConfirm.addEventListener("click", confirmProduct);
+
+  // categories modal
+  el.btnCats.addEventListener("click", openCatsModal);
+  el.cClose.addEventListener("click", closeCatsModal);
+  el.cCancel.addEventListener("click", closeCatsModal);
+  el.cAdd.addEventListener("click", () => {
+    const n = el.cNew.value.trim();
+    if(!n) return;
+    addCategory(n);
+    el.cNew.value = "";
+    renderCatsList();
+  });
+
+  el.cList.addEventListener("click", (e) => {
+    const wrap = e.target.closest(".item[data-cat]");
+    if(!wrap) return;
+    const cat = wrap.getAttribute("data-cat");
+
+    const actBtn = e.target.closest("button[data-act]");
+    if(!actBtn) return;
+    const act = actBtn.getAttribute("data-act");
+
+    if(act === "delCat") return deleteCategory(cat);
+    if(act === "doRename"){
+      const input = wrap.querySelector("input[data-act='rename']");
+      const newName = input ? input.value.trim() : "";
+      if(!newName) return;
+      return renameCategory(cat, newName);
+    }
+  });
+
+  // Header actions menu
+const actionsBtn = $("btnActions");
+const actionsMenu = $("actionsMenu");
+function closeActionsMenu(){
+  actionsMenu.classList.remove("open");
+  actionsBtn.setAttribute("aria-expanded","false");
+}
+actionsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = actionsMenu.classList.toggle("open");
+  actionsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+});
+document.addEventListener("click", (e) => {
+  if(!actionsMenu.classList.contains("open")) return;
+  if(e.target.closest("#actionsMenu")) return;
+  if(e.target.closest("#btnActions")) return;
+  closeActionsMenu();
+});
+
+// ===== Init =====
+  load().catch((e)=>{ console.error(e); alert("Error inicializando Firebase. Revisá consola. Si abriste por file:// probá con Live Server o http."); });
+  render();
+})();
+
+</script>
+<div id="errBanner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:#fff1f2; border:1px solid #fecdd3; color:#7f1d1d; padding:10px 12px; border-radius:12px; font: 13px/1.35 ui-sans-serif,system-ui;">
+  <b>Error:</b> <span id="errMsg"></span>
+</div>
+</body>
+</html>
