@@ -1510,7 +1510,7 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
     const item = e.target.closest(".item[data-id]");
     if(!btn && !item) return;
 
-    const id = (btn || item).getAttribute("data-id");
+    const id = (btn && btn.getAttribute("data-id")) || (item && item.getAttribute("data-id"));
     const act = btn ? btn.getAttribute("data-act") : "out"; // click en tarjeta = SALIDA por defecto
 
     if(act === "in") openMoveModal(id, "IN");
