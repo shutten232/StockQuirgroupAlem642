@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Stock · Simple & Operativo</title>
+<title>Stock · Quirgroup-Alem</title>
 <style>
   :root{
   --bg:#f5f6f8;
@@ -528,7 +528,7 @@
 <header class="topbar">
   <div class="inner">
     <div class="brand">
-      <div class="t">STOCK QUIROGA GNC</div>
+      <div class="t">STOCK QUIRGROUP-ALEM</div>
       <div class="sub">Control de stock operativo</div>
     </div>
     <div class="pill" id="pillTotals">0 productos · 0 mov.</div>
@@ -1172,6 +1172,10 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
   function openProductModal(mode, productId=null){
     // mode: "new" | "edit"
     const isEdit = mode === "edit";
+
+    // Asegurar que el select tenga las categorías actuales
+    renderCatSelects();
+
     el.backdropProd.style.display = "flex";
     el.backdropProd.setAttribute("aria-hidden","false");
 
@@ -1180,23 +1184,34 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
 
     if(isEdit){
       const p = products.find(x => x.id === productId);
-      if(!p) return;
+      if(!p){
+        showErr("No encontré el producto. Recargá la página.");
+        closeProductModal();
+        return;
+      }
       selectedProductId = productId;
-      el.pName.value = p.name;
-      el.pCatSel.value = p.category || "Sin categoría";
+
+      el.pName.value = p.name || "";
+      // setear luego de renderCatSelects para que exista la opción
+      el.pCatSel.value = (p.category && cats.includes(p.category)) ? p.category : "Sin categoría";
       el.pCatNew.value = "";
+
+      // En edición no se cambia stock acá (solo nombre/categoría)
       el.pStockWrap.style.display = "none";
       el.pStock.value = String(p.stock ?? 0);
     } else {
       selectedProductId = null;
+
       el.pName.value = "";
       el.pCatSel.value = "Sin categoría";
       el.pCatNew.value = "";
+
       el.pStockWrap.style.display = "block";
       el.pStock.value = "0";
     }
 
-    setTimeout(()=>el.pName.focus(), 50);
+    // focus
+    setTimeout(() => el.pName.focus(), 0);
   }
 
   function closeProductModal(){
@@ -1286,9 +1301,27 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
   // ===== Context menu =====
   function openMenu(x, y, productId){
     menuTargetId = productId;
+
     el.menu.style.display = "block";
+    // posicion inicial
     el.menu.style.left = x + "px";
     el.menu.style.top = y + "px";
+
+    // Ajuste para que no se quede "arriba" ni se salga de pantalla
+    const pad = 8;
+    const r = el.menu.getBoundingClientRect();
+
+    let nx = x, ny = y;
+
+    if(nx + r.width > window.innerWidth - pad){
+      nx = Math.max(pad, window.innerWidth - pad - r.width);
+    }
+    if(ny + r.height > window.innerHeight - pad){
+      ny = Math.max(pad, y - r.height - 10); // abrir hacia arriba si no entra
+    }
+
+    el.menu.style.left = nx + "px";
+    el.menu.style.top = ny + "px";
   }
 
   function closeMenu(){
@@ -1509,7 +1542,13 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
     render();
   });
 
-  document.addEventListener("click", (e) => {
+  
+// cerrar menú si scrolleás (evita que quede "pegado" arriba)
+el.list.addEventListener("scroll", () => closeMenu(), { passive:true });
+window.addEventListener("scroll", () => closeMenu(), { passive:true });
+window.addEventListener("resize", () => closeMenu(), { passive:true });
+
+document.addEventListener("click", (e) => {
     if(el.menu.style.display !== "block") return;
     if(e.target.closest("#menu")) return;
     if(e.target.closest("button[data-act='menu']")) return;
