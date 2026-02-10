@@ -628,7 +628,7 @@ position: fixed;
                 <th class="nowrap">Fecha</th>
                 <th>Producto</th>
                 <th class="nowrap">Δ</th>
-                <th class="nowrap">Antes→Después</th><th>Obs.</th>
+                <th class="nowrap">Antes→Después</th><th>Obs.</th><th class="nowrap">Acción</th>
               </tr>
             </thead>
             <tbody id="movesTbody"></tbody>
@@ -973,6 +973,7 @@ const endOfDay   = (ms) => { const d=new Date(ms); d.setHours(23,59,59,999); ret
     })).filter(p => p.name);
 
     moves = moves.map(m => ({
+      id: String(m.id || uid()),
       ts: Number(m.ts || Date.now()),
       productId: String(m.productId || ""),
       productName: String(m.productName || "").trim(),
@@ -1018,7 +1019,70 @@ const endOfDay   = (ms) => { const d=new Date(ms); d.setHours(23,59,59,999); ret
     return out;
   }
 
-  // ===== Render =====
+  
+  function recomputeStocksAndMoveBeforeAfter(){
+    // Calcula stock inicial por producto usando el stock actual y los deltas aplicados (after-before).
+    const initByPid = new Map();
+    const deltaSum = new Map();
+
+    for(const m of moves){
+      const pid = String(m.productId || "");
+      if(!pid) continue;
+      const d = (Number(m.after) - Number(m.before));
+      deltaSum.set(pid, (deltaSum.get(pid) || 0) + (Number.isFinite(d) ? d : 0));
+    }
+
+    for(const p of products){
+      const pid = String(p.id || "");
+      const cur = Number.isFinite(+p.stock) ? parseInt(p.stock,10) : 0;
+      const sum = deltaSum.get(pid) || 0;
+      initByPid.set(pid, cur - sum);
+    }
+
+    // Recalcula before/after moviendo en orden por ts por cada producto.
+    const byPid = new Map();
+    for(const m of moves){
+      const pid = String(m.productId || "");
+      if(!byPid.has(pid)) byPid.set(pid, []);
+      byPid.get(pid).push(m);
+    }
+
+    for(const [pid, arr] of byPid.entries()){
+      arr.sort((a,b)=>Number(a.ts||0)-Number(b.ts||0));
+      let running = Number.isFinite(+initByPid.get(pid)) ? parseInt(initByPid.get(pid),10) : 0;
+      for(const m of arr){
+        const qty = Number.isFinite(+m.qty) ? Math.max(1, parseInt(m.qty,10)) : 1;
+        const before = running;
+        const after = (m.type === "IN") ? (before + qty) : Math.max(0, before - qty);
+        m.before = before;
+        m.after = after;
+        running = after;
+      }
+      // Actualiza stock final del producto
+      const pIdx = products.findIndex(x => String(x.id) === pid);
+      if(pIdx !== -1){
+        products[pIdx] = { ...products[pIdx], stock: Math.max(0, parseInt(running,10) || 0) };
+      }
+    }
+
+    // Para productos sin movimientos, conserva su stock (init ya coincide).
+  }
+
+  function deleteMoveById(id){
+    const m = moves.find(x => String(x.id) === String(id));
+    if(!m){ showErr("No encontré el movimiento (id). Recargá la página."); return; }
+
+    const label = `${m.type} ${m.qty} · ${m.productName || m.productId}`;
+    if(!confirm(`Eliminar movimiento?
+${label}`)) return;
+
+    moves = moves.filter(x => String(x.id) !== String(id));
+    recomputeStocksAndMoveBeforeAfter();
+    save();
+    render();
+  }
+
+// ===== Render =====
   function render(){
     renderCatSelects();
     renderProducts();
@@ -1141,6 +1205,7 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
           <td class="nowrap"><span class="pill ${badge}">${delta}</span></td>
           <td class="nowrap">${m.before}→${m.after}</td>
           <td class="muted obsCol">${esc(m.note||"")}</td>
+        <td class="nowrap"><button class="btn btn-icon btn-danger" type="button" title="Eliminar movimiento" aria-label="Eliminar movimiento" data-del-move="${m.id}">×</button></td>
         </tr>
       `;
     }).join("");
@@ -1514,7 +1579,17 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
     renderMoves();
   });
 
-  // product list actions
+  
+  // delete move (delegation)
+  el.movesTbody.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-del-move]");
+    if(!btn) return;
+    const id = String(btn.getAttribute("data-del-move") || "");
+    if(!id) return;
+    deleteMoveById(id);
+  });
+
+// product list actions
   el.list.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-act]");
     const item = e.target.closest(".item[data-id]");
