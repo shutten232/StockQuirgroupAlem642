@@ -1076,8 +1076,21 @@ const endOfDay   = (ms) => { const d=new Date(ms); d.setHours(23,59,59,999); ret
     if(!confirm(`Eliminar movimiento?
 ${label}`)) return;
 
+    // Revertir stock del producto SOLO por el impacto real que tuvo ese movimiento.
+    // Importante: en OUT el after puede estar "clamp" a 0, por eso usamos (after-before)
+    // y no simplemente qty.
+    const pid = String(m.productId || "");
+    const pIdx = products.findIndex(p => String(p.id) === pid);
+    if(pIdx !== -1){
+      const cur = Number.isFinite(+products[pIdx].stock) ? parseInt(products[pIdx].stock,10) : 0;
+      const deltaApplied = (Number(m.after) - Number(m.before));
+      const next = Math.max(0, cur - (Number.isFinite(deltaApplied) ? deltaApplied : 0));
+      products[pIdx] = { ...products[pIdx], stock: next };
+    }
+
+    // Eliminar movimiento
     moves = moves.filter(x => String(x.id) !== String(id));
-    recomputeStocksAndMoveBeforeAfter();
+
     save();
     render();
   }
