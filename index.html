@@ -522,7 +522,104 @@ position: fixed;
 }
 #movesFiltersRow .row{
   flex-wrap: wrap;
-}</style>
+}
+  /* ===== Mobile (teléfonos) ===== */
+  @media (max-width: 640px){
+    body{font-size:14px}
+    .topbar{position:sticky;top:0;z-index:50}
+    .topbar .inner{
+      flex-direction:column;
+      align-items:stretch;
+      gap:10px;
+      padding:10px;
+    }
+    .brand{min-width:0}
+    .brand .t{font-size:14px;letter-spacing:.4px}
+    .brand .sub{font-size:12px}
+    .pill{justify-content:center}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .actions > button,
+    .actions .actionsGroup > button{
+      flex:1 1 auto;
+      min-width:0;
+      padding:12px 12px;
+      font-size:14px;
+      border-radius:14px;
+    }
+
+    .wrap{padding:10px}
+    .card .hd{padding:12px}
+    .card .bd{padding:12px}
+    .row{gap:8px}
+    .search{min-width:0;width:100%}
+    .select{width:100%}
+    #btnCats{width:100%}
+
+    /* Productos: stack + botones grandes */
+    .item{flex-direction:column;align-items:stretch;gap:10px;padding:12px}
+    .item .right{width:100%;display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .stk{min-width:auto}
+    .btns{width:100%;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+    .btn.mini{padding:12px 10px;font-size:14px;border-radius:14px}
+    .btn.mini.more{padding:12px 12px;min-width:48px}
+
+    /* Movimientos: tabla -> cards */
+    table{border-collapse:separate;border-spacing:0 10px}
+    thead{display:none}
+    tbody tr{
+      display:block;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    tbody td{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border:0;
+      border-bottom:1px solid rgba(220,223,228,.55);
+      white-space:normal !important;
+    }
+    tbody td:last-child{border-bottom:0}
+    tbody td::before{
+      content: attr(data-label);
+      color: var(--muted);
+      font-size:12px;
+      flex:0 0 auto;
+      padding-right:10px;
+    }
+    .obsCol{max-width:none}
+
+    /* Modales: full screen */
+    .modal, .modalProd, .modalCats{
+      width:100%;
+      max-width:none;
+      height:100%;
+      max-height:none;
+      border-radius:0;
+    }
+    .mhd, .mhdProd, .mhdCats{padding:14px}
+    .mbd, .mbdProd, .mbdCats{padding:14px;overflow:auto}
+    .mft, .mftProd, .mftCats{
+      padding:14px;
+      position:sticky;
+      bottom:0;
+      background:rgba(10,14,20,.92);
+      backdrop-filter: blur(8px);
+      border-top:1px solid var(--line);
+    }
+    .mft .btn, .mftProd .btn, .mftCats .btn{
+      padding:12px 14px;
+      font-size:14px;
+      border-radius:14px;
+    }
+    input, textarea, select{font-size:16px} /* evita zoom iOS */
+  }
+
+</style>
 </head>
 <body>
 
@@ -1213,12 +1310,12 @@ const toTs   = dTo   !== null ? endOfDay(dTo)     : null;
       const badge = m.type === "IN" ? "ok" : "bad";
       return `
         <tr>
-          <td class="nowrap">${fmt(m.ts)}</td>
-          <td>${esc(m.productName)}</td>
-          <td class="nowrap"><span class="pill ${badge}">${delta}</span></td>
-          <td class="nowrap">${m.before}→${m.after}</td>
-          <td class="muted obsCol">${esc(m.note||"")}</td>
-        <td class="nowrap"><button class="btn btn-icon btn-danger" type="button" title="Eliminar movimiento" aria-label="Eliminar movimiento" data-del-move="${m.id}">×</button></td>
+          <td class="nowrap" data-label="Fecha">${fmt(m.ts)}</td>
+          <td data-label="Producto">${esc(m.productName)}</td>
+          <td class="nowrap" data-label="Δ"><span class="pill ${badge}">${delta}</span></td>
+          <td class="nowrap" data-label="Antes→Después">${m.before}→${m.after}</td>
+          <td class="muted obsCol" data-label="Obs.">${esc(m.note||"")}</td>
+        <td class="nowrap" data-label="Acción"><button class="btn btn-icon btn-danger" type="button" title="Eliminar movimiento" aria-label="Eliminar movimiento" data-del-move="${m.id}">×</button></td>
         </tr>
       `;
     }).join("");
