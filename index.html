@@ -1754,7 +1754,9 @@ document.addEventListener("click", (e) => {
   });
 
   document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape"){
+    if(e.key === "Escape" || e.key === "Esc" || e.code === "Escape"){
+      const anyModalOpen = (el.backdrop?.style.display === "flex") || (el.backdropProd?.style.display === "flex") || (el.backdropCats?.style.display === "flex");
+      if(anyModalOpen) e.preventDefault();
       closeMenu();
       closeMoveModal();
       closeProductModal();
@@ -1776,7 +1778,7 @@ document.addEventListener("click", (e) => {
         confirmProduct();
       }
     }
-  });
+  }, true);
 
   // move modal buttons
   el.btnCancel.addEventListener("click", closeMoveModal);
